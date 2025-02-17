@@ -1,0 +1,37 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Connect to MongoDB
+mongoose.connect('mongodb://localhost:27017/searchDB', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+
+const SearchSchema = new mongoose.Schema({
+  title: String,
+  link: String,
+  description: String,
+});
+
+const SearchResult = mongoose.model('SearchResult', SearchSchema);
+
+// Search API endpoint
+app.get('/search', async (req, res) => {
+  const query = req.query.q;
+  if (!query) return res.json([]);
+  
+  const results = await SearchResult.find({
+    $or: [
+      { title: new RegExp(query, 'i') },
+      { description: new RegExp(query, 'i') },
+    ],
+  });
+  res.json(results);
+});
+
+app.listen(4000, () => console.log('Server running on port 4000'));
